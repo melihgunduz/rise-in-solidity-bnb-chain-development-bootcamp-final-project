@@ -1,0 +1,15 @@
+{
+  "name": "rise-in-solidity-bnb-chain-development-bootcamp-final-project",
+  "version": "1.0.0",
+  "description": "This contract provides to the users can buy, lock, transfer and sell their tokens.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Melih Gunduz (melih.gunduz@hotmail.com)",
+  "license": "MIT",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^3.0.0",
+    "hardhat": "^2.17.3"
+  }
+}
