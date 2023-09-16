@@ -5,7 +5,6 @@ pragma solidity ^0.8.18;
 contract SmartTransfer {
 
     uint256 private count = 0;
-    bytes32[] public lockIds;
     
     mapping (address => uint256) balances;
     mapping (address => mapping (bytes32 => LockedAmount)) public lockedAmount;
@@ -26,6 +25,8 @@ contract SmartTransfer {
     event TokensTransferred (address indexed from, address indexed to, uint256 indexed amount);
     event TokensLocked (address indexed from, uint256 indexed amount);
     event TokensUnlocked (address indexed from, uint256 indexed amount);
+    
+    error GetLockedAmountRevertError(string);
 
     modifier checkUnlockSuitability (uint256 _amount, bytes32 _id) {
         require(lockedAmount[msg.sender][_id].amount > 0,"You do not have any locked amount by this id."); // check the locked amount is bigger than 0
@@ -65,6 +66,16 @@ contract SmartTransfer {
 
     function getCount() private view returns (uint256) {
         return count; // return the current counter
+    }
+
+    function getLockedAmount() public view returns(uint256) {
+        bytes32[] memory ids = userLockIds[msg.sender];
+        require(ids.length != 0, "User do not have any locked amount");
+        uint lockedTotalAmount;
+        for (uint256 i = 0; i < ids.length; i++) { // loop as array length
+            lockedTotalAmount += lockedAmount[msg.sender][ids[i]].amount; // increase total amount if amount is locked
+        }
+        return lockedTotalAmount;
     }
 
     // calculate the all unlockable amounts locked by user

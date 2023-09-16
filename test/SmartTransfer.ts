@@ -43,5 +43,24 @@ describe("SmartTransfer", function () {
     
     expect(await smartTransferInstance.checkBalanceOfUser(acc1.address)).to.greaterThanOrEqual(ethers.parseEther("0.001"));
   });
+ 
+  it("should lock tokens from user", async function() {
+    const SmartTransfer = await ethers.getContractFactory("SmartTransfer");
+    const smartTransferInstance = await SmartTransfer.deploy();
+    await smartTransferInstance.buyToken({value: ethers.parseEther("0.001")});
+    await smartTransferInstance.lockTokens(ethers.parseEther("0.001"));
+
+    expect(await smartTransferInstance.getLockedAmount()).to.greaterThan(ethers.parseEther("0"));
+  });
+ 
+  it("should unlock tokens of user", async function() {
+    const SmartTransfer = await ethers.getContractFactory("SmartTransfer");
+    const smartTransferInstance = await SmartTransfer.deploy();
+    await smartTransferInstance.buyToken({value: ethers.parseEther("0.001")});
+    await smartTransferInstance.lockTokens(ethers.parseEther("0.001"));
+    await smartTransferInstance.unlockAllAvailableTokens();
+
+    await expect(smartTransferInstance.getLockedAmount()).to.be.revertedWith('User do not have any locked amount');
+  });
 
 });
