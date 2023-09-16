@@ -1,9 +1,16 @@
-# Sample Hardhat Project
+# Hardhat Smart Contract Project for Rise In
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a script that deploys that contract.
+This project is a final case project for Rise In Solidity & BNB Chain Development Bootcamp.
 
-Try running some of the following tasks:
-
+## Installation and file explorer structure
+* Clone this project and enter in by console
+* Run npm install
+* Create secrets.json on main root of project
+* Write your 12 letter pharse key inside secrets.json //example in below
+##
+After those you can run the project with hardhat commands.
+##
+Readme will be updated.
 ```shell
 npx hardhat help
 npx hardhat test
