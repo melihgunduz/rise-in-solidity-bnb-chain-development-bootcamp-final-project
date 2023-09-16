@@ -159,8 +159,6 @@ contract SmartTransfer {
         emit TokensUnlocked(msg.sender, _amount); // emit function
     }
 
-    //unlock remaining time funct
-
     receive() external payable {
         revert();
     }
