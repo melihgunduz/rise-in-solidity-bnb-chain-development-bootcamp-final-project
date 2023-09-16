@@ -59,7 +59,7 @@ describe("SmartTransfer", function () {
     await smartTransferInstance.unlockAllAvailableTokens(); // trigger unlock the locked tokens
 
     // defining what we expect
-    await expect(smartTransferInstance.getLockedAmount()).to.be.revertedWith('User do not have any locked amount');
+    await expect(smartTransferInstance.getLockedAmount()).to.be.revertedWith('User do not have any locked amount'); // take care using await if you waiting revert
     // we expecting locked balance of user equals 0 ether but in our smart contract we are checking the locked balance
     // and reverting if there is no locked balance. that's why we expecting a revert with warning
   });
