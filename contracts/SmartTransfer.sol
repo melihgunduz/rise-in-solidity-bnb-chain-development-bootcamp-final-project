@@ -1,9 +1,12 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
 
+// importing reentrancy guard from openzeppelin contracts
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-contract SmartTransfer {
+contract SmartTransfer is ReentrancyGuard {
 
+    //defining necessary mappings, variables and structs in below
     uint256 private count = 0;
     
     mapping (address => uint256) balances;
@@ -20,14 +23,19 @@ contract SmartTransfer {
         uint256 rewardRatio;
     }
 
+    //our events are below that triggers when functions over
     event TokensPurchased (address indexed from, uint256 indexed amount);
     event TokensSold (address indexed from, uint256 indexed amount);
     event TokensTransferred (address indexed from, address indexed to, uint256 indexed amount);
     event TokensLocked (address indexed from, uint256 indexed amount);
     event TokensUnlocked (address indexed from, uint256 indexed amount);
     
-    error GetLockedAmountRevertError(string);
 
+    constructor() {
+        balances[address(this)] = 1 ether; // giving 1 ether balance to our contract
+    }
+
+    // creating medifier for unlock tokens by id
     modifier checkUnlockSuitability (uint256 _amount, bytes32 _id) {
         require(lockedAmount[msg.sender][_id].amount > 0,"You do not have any locked amount by this id."); // check the locked amount is bigger than 0
         require(lockedAmount[msg.sender][_id].amount >= _amount,"You do not have enough locked amount."); // check the locked amount is bigger than requested amount
@@ -36,23 +44,23 @@ contract SmartTransfer {
     }
 
     // get ether from user and add balance to the user
-    function buyToken() public payable {
+    function buyToken() public payable nonReentrant {
         require(msg.value >= 0.001 ether, "Enter a valid balance."); // check msg.value is bigger than 1
         uint etherToWei = msg.value; // define uint for convert wei to ether
         balances[msg.sender] += etherToWei; // increase the user balance as amount
         emit TokensPurchased(msg.sender, etherToWei); // emits function
     }
 
-    function calculateReward() public {
+    function calculateRewardRatioPerToken() public{
         bytes32[] memory ids = getUnlockableTokenIds(); // define memory array that holds the unlockable lock ids
         for (uint256 i = 0; i < ids.length; i++) { // loop as array length
-            uint256 ratio;
+            uint256 ratio; // define ratio variable for token reward ratio
             ratio = lockedAmount[msg.sender][ids[i]].unlockTimeForAmount - lockedAmount[msg.sender][ids[i]].lockTimeForAmount;
-            ratio = (ratio * 5) / 1 gwei;
-            lockedAmount[msg.sender][ids[i]].rewardRatio = ratio;
+            // the line above calculating ratio with lock and unlock times
+            ratio = (ratio * 500); // changing ratio value
+            lockedAmount[msg.sender][ids[i]].rewardRatio = ratio; // applying ratio for locked tokens
         }
     }
-    // reward calculation completed will be tested and connect to unlock functions
 
     function checkBalanceOfUser(address _user) view public returns(uint256) {
         return balances[_user]; // return the balance of user 
@@ -68,14 +76,16 @@ contract SmartTransfer {
         return count; // return the current counter
     }
 
+
+    // get all locked amount of user
     function getLockedAmount() public view returns(uint256) {
-        bytes32[] memory ids = userLockIds[msg.sender];
-        require(ids.length != 0, "User do not have any locked amount");
-        uint lockedTotalAmount;
+        bytes32[] memory ids = userLockIds[msg.sender]; // define memory array that holds the locked tokens ids
+        require(ids.length != 0, "User do not have any locked amount"); // check if user have locked tokens
+        uint lockedTotalAmount; // define variable to sum all locked tokens value
         for (uint256 i = 0; i < ids.length; i++) { // loop as array length
             lockedTotalAmount += lockedAmount[msg.sender][ids[i]].amount; // increase total amount if amount is locked
         }
-        return lockedTotalAmount;
+        return lockedTotalAmount; // returns total locked amount
     }
 
     // calculate the all unlockable amounts locked by user
@@ -109,12 +119,9 @@ contract SmartTransfer {
         require(balances[msg.sender] >= _amount, "Requested balance bigger than total balance.");
         balances[msg.sender] -= _amount; // decreasing user balance from balances
         uint256 lockTime = block.timestamp; // get current time as second
-        uint256 unlockTime = lockTime; //+ 0 seconds; // set unlock time, added 1 second for development
+        uint256 unlockTime = lockTime + 15 seconds; // set unlock time, added 1 second for development
         bytes32 id = generateId(); // call generateId function and generate id for mapping
-        lockedAmount[msg.sender][id].amount = _amount; // set amount of the will be locked tokens
-        lockedAmount[msg.sender][id].lockId = id; // set id of the will be locked tokens
-        lockedAmount[msg.sender][id].lockTimeForAmount = lockTime; // set lock time of the will be locked tokens
-        lockedAmount[msg.sender][id].unlockTimeForAmount = unlockTime; // set unlock time of the will be locked tokens
+        lockedAmount[msg.sender][id] = LockedAmount(_amount,id,lockTime,unlockTime,0); // set locked
         userLockIds[msg.sender].push(id); // push mapping id to the userLockIds list
         emit TokensLocked(msg.sender, _amount); // emit function
     }
@@ -140,16 +147,27 @@ contract SmartTransfer {
     function unlockAllAvailableTokens() public {
         bytes32[] memory ids = getUnlockableTokenIds(); // define an bytes array equals to unlockable ids bytes
         uint256 totalAvailableTokens; // define unlockable total amount
+        uint256 rewardTokens; // define reward token variable
+        calculateRewardRatioPerToken(); // calculating reward before unlock them
         for (uint256 i = 0; i < ids.length; i++) { // loop as array length
+            rewardTokens += lockedAmount[msg.sender][ids[i]].amount * lockedAmount[msg.sender][ids[i]].rewardRatio;
             totalAvailableTokens += lockedAmount[msg.sender][ids[i]].amount; // sum of unlockable tokens
             delete lockedAmount[msg.sender][ids[i]]; // delete the map which has zero amount
         }
         delete userLockIds[msg.sender]; // delete the map which has locked ids
         balances[msg.sender] += totalAvailableTokens; // add tokens amount to the user balance
+        transferToken(address(this), msg.sender, rewardTokens); // transfer the rewards from contract to user
+        emit TokensUnlocked(msg.sender, totalAvailableTokens); // emit function
+
     }
 
     // unlock the locked tokens
     function unlockTokensByLockId(uint256 _amount, bytes32 _id) public checkUnlockSuitability(_amount, _id) {
+        calculateRewardRatioPerToken(); // calculating reward before unlock them
+        uint256 rewardTokens; // define reward token variable
+        rewardTokens += lockedAmount[msg.sender][_id].amount * lockedAmount[msg.sender][_id].rewardRatio; 
+        transferToken(address(this), msg.sender, rewardTokens); // transfer the rewards from contract to user
+
         balances[msg.sender] += _amount; // add tokens to the user balances
         if (lockedAmount[msg.sender][_id].amount == _amount) {
             delete lockedAmount[msg.sender][_id]; // if requested amount equals to the user locked amounts then delete mapping
@@ -160,6 +178,6 @@ contract SmartTransfer {
     }
 
     receive() external payable {
-        revert();
+        revert(); // reverting transactions that coming outside from functions
     }
 }
