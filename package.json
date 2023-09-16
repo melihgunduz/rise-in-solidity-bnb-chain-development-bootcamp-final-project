@@ -4,12 +4,13 @@
   "description": "This contract provides to the users can buy, lock, transfer and sell their tokens.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha"
   },
   "author": "Melih Gunduz (melih.gunduz@hotmail.com)",
   "license": "MIT",
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^3.0.0",
-    "hardhat": "^2.17.3"
+    "hardhat": "^2.17.3",
+    "mocha": "^10.2.0"
   }
 }

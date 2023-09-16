@@ -11,7 +11,7 @@ async function main() {
   });
 
   await lock.waitForDeployment();
-
+  
 }
 
 // We recommend this pattern to be able to use async/await everywhere
