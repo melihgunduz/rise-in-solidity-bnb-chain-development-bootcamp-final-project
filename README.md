@@ -79,7 +79,8 @@ npx hardhat test ./test/YourTestScript
 
 This command will initiate the smart contract tests and display the results in the terminal.
 
-
+![]
+![image](https://github.com/melihgunduz/rise-in-solidity-bnb-chain-development-bootcamp-final-project/blob/main/assets/smart-transfer-test-image.png)
 
 ## Contributing
 
