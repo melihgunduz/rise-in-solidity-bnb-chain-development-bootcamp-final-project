@@ -1,6 +1,6 @@
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
-const {MNEMONIC} = require('./secrets.json');
+const {MNEMONIC, BSCAPIKEY} = require('./secrets.json');
 
 const config: HardhatUserConfig = {
   solidity: "0.8.19",
@@ -18,6 +18,9 @@ const config: HardhatUserConfig = {
       gasPrice: 20000000000,
       accounts: {mnemonic: MNEMONIC},
     },
+  },
+  etherscan: {
+    apiKey: BSCAPIKEY
   }
 };
 
